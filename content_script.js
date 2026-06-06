@@ -9,10 +9,14 @@ const KEYS = {
   blockImages: 'bm_block_images',
   blockVideos: 'bm_block_videos',
   blockIframes: 'bm_block_iframes',
-  whitelist: 'bm_whitelist'
+  whitelist: 'bm_whitelist',
+  customSelectors: 'bm_custom_selectors'
 };
 
 const DEFAULT_PLACEHOLDER = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80';
+
+// Active selectors list used for click interception (updated dynamically)
+let activeClickSelectors = 'img, video, iframe, [style*="background-image"]';
 
 // Function to generate and apply dynamic style rules
 function updateDynamicStyles(settings) {
@@ -50,6 +54,7 @@ function updateDynamicStyles(settings) {
   const blockImages = settings[KEYS.blockImages] !== false; // default true
   const blockVideos = settings[KEYS.blockVideos] !== false; // default true
   const blockIframes = settings[KEYS.blockIframes] !== false; // default true
+  const customSelectors = settings[KEYS.customSelectors] || [];
 
   if (blockImages) {
     selectors.push('html.bm-active img:not(.bm-revealed)');
@@ -61,6 +66,31 @@ function updateDynamicStyles(settings) {
   if (blockIframes) {
     selectors.push('html.bm-active iframe:not(.bm-revealed)');
   }
+
+  // Add custom selectors
+  customSelectors.forEach(sel => {
+    if (sel) {
+      selectors.push(`html.bm-active ${sel}:not(.bm-revealed)`);
+    }
+  });
+
+  // Re-build active selector list for click-to-reveal target matching
+  const baseClickSelectors = [];
+  if (blockImages) {
+    baseClickSelectors.push('img', '[style*="background-image"]');
+  }
+  if (blockVideos) {
+    baseClickSelectors.push('video');
+  }
+  if (blockIframes) {
+    baseClickSelectors.push('iframe');
+  }
+  customSelectors.forEach(sel => {
+    if (sel) {
+      baseClickSelectors.push(sel);
+    }
+  });
+  activeClickSelectors = baseClickSelectors.join(', ');
 
   if (selectors.length === 0) {
     styleEl.textContent = '';
@@ -138,6 +168,23 @@ function updateDynamicStyles(settings) {
         }
       `;
     }
+
+    // Apply generic placeholder style to custom selectors in placeholder mode
+    const validCustoms = customSelectors.filter(sel => !!sel);
+    if (validCustoms.length > 0) {
+      const customSelectorList = validCustoms.map(sel => `html.bm-active ${sel}:not(.bm-revealed)`).join(',\n');
+      rules += `
+        ${customSelectorList} {
+          background-image: url('${placeholderUrl}') !important;
+          background-size: cover !important;
+          background-position: center !important;
+          background-color: #1e293b !important;
+          color: transparent !important;
+          text-shadow: none !important;
+          opacity: 0.85 !important;
+        }
+      `;
+    }
   }
 
   styleEl.textContent = rules;
@@ -154,7 +201,8 @@ function refreshStyles() {
     [KEYS.blockImages]: true,
     [KEYS.blockVideos]: true,
     [KEYS.blockIframes]: true,
-    [KEYS.whitelist]: []
+    [KEYS.whitelist]: [],
+    [KEYS.customSelectors]: []
   }, (items) => {
     updateDynamicStyles(items);
   });
@@ -179,8 +227,8 @@ chrome.storage.onChanged.addListener((changes, area) => {
 document.addEventListener('click', (e) => {
   if (!document.documentElement.classList.contains('bm-active')) return;
   
-  // Find if we clicked on a blocked element
-  const target = e.target.closest('img, video, iframe, [style*="background-image"]');
+  // Find if we clicked on a blocked element (dynamic selector matching)
+  const target = e.target.closest(activeClickSelectors || 'img, video, iframe, [style*="background-image"]');
   
   if (target && !target.classList.contains('bm-revealed')) {
     // Intercept the click on first click to reveal the blocked media

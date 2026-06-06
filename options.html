@@ -15,12 +15,13 @@
       /* Light Mode Palette */
       --bg-color: #f8fafc;
       --card-bg: #ffffff;
+      --h-text-color: #816701;
       --text-color: #0f172a;
       --text-muted: #64748b;
-      --accent-color: #6366f1; /* Indigo */
-      --accent-hover: #4f46e5;
-      --accent-light: #e0e7ff;
-      --border-color: #e2e8f0;
+      --accent-color: #eab308; /* Emoji Yellow / Gold */
+      --accent-hover: #ca8a04;
+      --accent-light: #fef9c3;
+      --border-color: #ffcb00;
       --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
       --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
       --radius: 16px;
@@ -33,17 +34,18 @@
     @media (prefers-color-scheme: dark) {
       :root {
         /* Dark Mode Palette */
-        --bg-color: #090d16;
-        --card-bg: #111827;
+        --bg-color: #0f0f0f;
+        --card-bg: #0f0f0f;
+        --h-text-color: #eab308;
         --text-color: #f8fafc;
         --text-muted: #94a3b8;
-        --accent-color: #818cf8; /* Light Indigo */
-        --accent-hover: #6366f1;
-        --accent-light: #1e1b4b;
-        --border-color: #1f2937;
+        --accent-color: #eab308; /* Emoji Yellow / Gold */
+        --accent-hover: #facc15;
+        --accent-light: #3e2e01;
+        --border-color: #887c4d;
         --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
         --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
-        --input-bg: #1f2937;
+        --input-bg: #0f0f0f;
         --input-border: #374151;
       }
     }
@@ -76,25 +78,13 @@
       animation: fadeInDown 0.6s ease;
     }
 
-    .logo-container {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 72px;
-      height: 72px;
-      background: linear-gradient(135deg, var(--accent-color), #a5b4fc);
-      border-radius: 20px;
-      margin-bottom: 16px;
-      box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4);
-      font-size: 32px;
-      color: white;
-    }
-
     h1 {
+      color: var(--h-text-color);
       font-family: var(--font-family-title);
-      font-size: 28px;
+      font-size: 48px;
       font-weight: 700;
       letter-spacing: -0.025em;
+      margin-top: 20px;
       margin-bottom: 8px;
     }
 
@@ -268,7 +258,7 @@
       border-radius: 50%;
       background: var(--accent-color);
       cursor: pointer;
-      box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+      box-shadow: 0 0 10px rgba(234, 179, 8, 0.5);
       border: 2px solid var(--card-bg);
       transition: transform 0.1s ease;
     }
@@ -507,8 +497,7 @@
 <body>
   <div class="container">
     <header>
-      <div class="logo-container">🙈</div>
-      <h1>Hide & Seek</h1>
+      <h1>🙈 Hide & Seek 🙊</h1>
       <p class="subtitle">Personalize your media protection preferences</p>
     </header>
 
@@ -525,10 +514,10 @@
               Auto-Reload Active Tab
               <span class="label-desc">Automatically refresh the active tab when clicking the toolbar icon to toggle state</span>
             </label>
-            <div class="switch">
+            <label class="switch" for="reloadOnToggle">
               <input type="checkbox" id="reloadOnToggle">
               <span class="slider"></span>
-            </div>
+            </label>
           </div>
         </div>
       </section>
@@ -571,10 +560,10 @@
                 Grayscale Filter
                 <span class="label-desc">Remove colors from blurred elements for maximum discretion</span>
               </label>
-              <div class="switch">
+              <label class="switch" for="useGrayscale">
                 <input type="checkbox" id="useGrayscale">
                 <span class="slider"></span>
-              </div>
+              </label>
             </div>
           </div>
         </div>
@@ -651,10 +640,25 @@
           <textarea id="whitelist" class="text-input" placeholder="example.com&#10;anotherdomain.org" spellcheck="false"></textarea>
         </div>
       </section>
+
+      <!-- Custom Selectors -->
+      <section class="card">
+        <h2 class="card-title">
+          <span class="icon">🎯</span> Custom CSS Selectors
+        </h2>
+
+        <div class="form-group">
+          <label for="customSelectors">
+            Custom Selectors to Block
+            <span class="label-desc">Enter CSS selectors (one per line, e.g. .sensitive-class, #ad-media) to manually block additional elements on any page.</span>
+          </label>
+          <textarea id="customSelectors" class="text-input" placeholder=".ad-banner&#10;#sensitive-content&#10;div.restricted-media" spellcheck="false"></textarea>
+        </div>
+      </section>
     </main>
 
     <footer>
-      <p>🙈 <strong>Hide & Seek</strong> is 100% private. No data leaves your machine.</p>
+      <p><strong>Hide & Seek</strong> is 100% private. No data leaves your machine.</p>
       <p>Created by <a href="https://github.com/albertolicea00" target="_blank" rel="noopener noreferrer">Alberto Licea</a></p>
     </footer>
   </div>

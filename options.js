@@ -11,7 +11,8 @@ const STORAGE_KEYS = {
   blockImages: 'bm_block_images',
   blockVideos: 'bm_block_videos',
   blockIframes: 'bm_block_iframes',
-  whitelist: 'bm_whitelist'
+  whitelist: 'bm_whitelist',
+  customSelectors: 'bm_custom_selectors'
 };
 
 // UI Elements
@@ -28,6 +29,7 @@ const ui = {
   blockVideos: document.getElementById('blockVideos'),
   blockIframes: document.getElementById('blockIframes'),
   whitelist: document.getElementById('whitelist'),
+  customSelectors: document.getElementById('customSelectors'),
   toast: document.getElementById('toast'),
   
   // Sections
@@ -80,7 +82,8 @@ function loadOptions() {
     [STORAGE_KEYS.blockImages]: true,
     [STORAGE_KEYS.blockVideos]: true,
     [STORAGE_KEYS.blockIframes]: true,
-    [STORAGE_KEYS.whitelist]: []
+    [STORAGE_KEYS.whitelist]: [],
+    [STORAGE_KEYS.customSelectors]: []
   }, (items) => {
     // Populate form fields
     ui.reloadOnToggle.checked = items[STORAGE_KEYS.reloadOnToggle];
@@ -95,6 +98,9 @@ function loadOptions() {
     
     // Whitelist is stored as array, display as newline-separated string
     ui.whitelist.value = (items[STORAGE_KEYS.whitelist] || []).join('\n');
+    
+    // Custom Selectors is stored as array, display as newline-separated string
+    ui.customSelectors.value = (items[STORAGE_KEYS.customSelectors] || []).join('\n');
 
     // Run visibility handler
     handleModeVisibility(items[STORAGE_KEYS.obfuscationMode]);
@@ -108,6 +114,11 @@ function saveOptions() {
     .map(line => line.trim().toLowerCase())
     .filter(line => line.length > 0);
 
+  const customSelectorsArray = ui.customSelectors.value
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line.length > 0);
+
   chrome.storage.sync.set({
     [STORAGE_KEYS.reloadOnToggle]: ui.reloadOnToggle.checked,
     [STORAGE_KEYS.obfuscationMode]: ui.obfuscationMode.value,
@@ -117,7 +128,8 @@ function saveOptions() {
     [STORAGE_KEYS.blockImages]: ui.blockImages.checked,
     [STORAGE_KEYS.blockVideos]: ui.blockVideos.checked,
     [STORAGE_KEYS.blockIframes]: ui.blockIframes.checked,
-    [STORAGE_KEYS.whitelist]: whitelistArray
+    [STORAGE_KEYS.whitelist]: whitelistArray,
+    [STORAGE_KEYS.customSelectors]: customSelectorsArray
   }, () => {
     showToast();
   });
@@ -166,6 +178,9 @@ function initEventListeners() {
 
   // Save whitelist on blur of textarea (user finished editing)
   ui.whitelist.addEventListener('blur', saveOptions);
+
+  // Save custom selectors on blur of textarea
+  ui.customSelectors.addEventListener('blur', saveOptions);
 }
 
 // Load option pages
