@@ -45,7 +45,7 @@ This repository contains **Hide & Seek**, a cross-browser extension designed to 
    - When adding `console.log` messages for debugging, prefix them clearly with `🙈 Hide & Seek:` so they are easy to identify in the console.
 
 ## Workflow
-- The project uses a two-branch workflow (`main` for releases, `beta` for active development).
+- The project uses `main` as the single stable branch. All changes are introduced via feature branches and merged into `main` through Pull Requests.
 - Standard build commands:
   - `make chrome`: Switch active configuration to Manifest V3 (Chrome)
   - `make firefox`: Switch active configuration to Manifest V2 (Firefox)
