@@ -133,6 +133,18 @@ Select the active configuration depending on your browser:
 
 ---
 
+## 🔮 Wishlist / Future Roadmap
+
+- 🧠 **On-Device AI Sensitive Content Detection**: Integrate lightweight, local machine learning models (such as TensorFlow.js or Transformers.js running entirely on-device) to dynamically scan images/videos and block only sensitive content, instead of blocking elements by category or selector.
+- 🚫 **Force-Blocked Domains (Blacklist)**: Define a list of specific domains where media blocking is *always* strictly enforced (e.g., blocking cannot be bypassed via toolbar toggles or click-to-reveal on those sites).
+- 🎨 **Custom CSS Override Rules**: Provide an input to inject custom CSS styles when elements are blocked, allowing users to customize placeholder layouts or completely hide slot containers and advertisements.
+- 🕒 **Scheduled Protection Mode**: Add option to automatically activate/deactivate media blocking during specific times of day or calendar schedules.
+- ⌨️ **Panic Key / Global Hotkeys**: Set up a configurable keyboard shortcut to instantly toggle the blocker state or re-hide all revealed media elements immediately.
+- 🕵️ **Stealth Icon & Disguise**: Support switching the browser toolbar icon to a stealth/generic icon (e.g. settings gear or generic utility icon) for maximum discretion.
+
+
+---
+
 ## 📄 License
 
 This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
