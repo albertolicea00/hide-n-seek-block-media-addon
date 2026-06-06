@@ -11,7 +11,7 @@
       }
     }
   },
-  "permissions": ["storage", "scripting", "activeTab"],
+  "permissions": ["storage", "scripting", "activeTab", "contextMenus"],
   "host_permissions": ["<all_urls>"],
   "options_page": "options.html",
   "action": {

@@ -57,6 +57,13 @@ actionAPI.onClicked.addListener(() => {
 });
 
 chrome.runtime.onInstalled.addListener(() => {
+  // Create context menu item under the extension toolbar icon
+  chrome.contextMenus.create({
+    id: "excludeCurrentSite",
+    title: "Exclude this website",
+    contexts: [isMV3 ? "action" : "browser_action"]
+  });
+
   // default enabled = true
   chrome.storage.sync.get(['bm_block_enabled'], (res) => {
     if (typeof res.bm_block_enabled === 'undefined') {
@@ -66,5 +73,29 @@ chrome.runtime.onInstalled.addListener(() => {
       updateIcon(res.bm_block_enabled !== false);
     }
   });
+});
+
+// Listen to context menu clicks to exclude current website
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId === "excludeCurrentSite" && tab && tab.url) {
+    try {
+      const url = new URL(tab.url);
+      const domain = url.hostname;
+      // Filter out internal browser pages
+      if (domain && !domain.startsWith('chrome://') && !domain.startsWith('chrome-extension://') && !domain.startsWith('about:')) {
+        chrome.storage.sync.get({ bm_whitelist: [] }, (res) => {
+          const whitelist = res.bm_whitelist || [];
+          if (!whitelist.includes(domain)) {
+            whitelist.push(domain);
+            chrome.storage.sync.set({ bm_whitelist: whitelist }, () => {
+              console.log(`🙈 Hide & Seek: Excluded site: ${domain}`);
+            });
+          }
+        });
+      }
+    } catch (e) {
+      console.error('🙈 Hide & Seek: Error excluding site:', e.message);
+    }
+  }
 });
 

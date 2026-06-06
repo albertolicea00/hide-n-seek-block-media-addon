@@ -32,10 +32,16 @@ function updateDynamicStyles(settings) {
   const hostname = window.location.hostname;
   const whitelist = settings[KEYS.whitelist] || [];
 
-  // Check if current site is whitelisted
-  const isWhitelisted = whitelist.some(domain => {
-    if (!domain) return false;
-    return hostname === domain || hostname.endsWith('.' + domain);
+  // Check if current site is whitelisted (supports standard domains and *.domain wildcards)
+  const isWhitelisted = whitelist.some(rule => {
+    if (!rule) return false;
+    
+    // Normalize rule: remove leading '*.' or '.' if present
+    const cleanRule = rule.startsWith('*.') 
+      ? rule.substring(2) 
+      : (rule.startsWith('.') ? rule.substring(1) : rule);
+    
+    return hostname === cleanRule || hostname.endsWith('.' + cleanRule);
   });
 
   if (!enabled || isWhitelisted) {

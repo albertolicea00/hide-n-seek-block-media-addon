@@ -15,6 +15,12 @@ const STORAGE_KEYS = {
   customSelectors: 'bm_custom_selectors'
 };
 
+// Local Lists State
+const state = {
+  whitelist: [],
+  customSelectors: []
+};
+
 // UI Elements
 const ui = {
   reloadOnToggle: document.getElementById('reloadOnToggle'),
@@ -28,8 +34,10 @@ const ui = {
   blockImages: document.getElementById('blockImages'),
   blockVideos: document.getElementById('blockVideos'),
   blockIframes: document.getElementById('blockIframes'),
-  whitelist: document.getElementById('whitelist'),
-  customSelectors: document.getElementById('customSelectors'),
+  whitelistInput: document.getElementById('whitelist-input'),
+  whitelistError: document.getElementById('whitelist-error'),
+  selectorsInput: document.getElementById('selectors-input'),
+  selectorsError: document.getElementById('selectors-error'),
   toast: document.getElementById('toast'),
   
   // Sections
@@ -71,6 +79,46 @@ function updatePlaceholderPreview(url) {
   }
 }
 
+// Render tag chips helper
+function renderTags(listId, tagArray, onRemoveCallback) {
+  const listEl = document.getElementById(listId);
+  if (!listEl) return;
+  
+  listEl.innerHTML = '';
+  tagArray.forEach((tag, index) => {
+    const chip = document.createElement('span');
+    chip.className = 'tag-chip';
+    chip.textContent = tag;
+    
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'remove-tag-btn';
+    removeBtn.innerHTML = '&times;';
+    removeBtn.addEventListener('click', () => {
+      onRemoveCallback(index);
+    });
+    
+    chip.appendChild(removeBtn);
+    listEl.appendChild(chip);
+  });
+}
+
+function renderWhitelistTags() {
+  renderTags('whitelist-tags-list', state.whitelist, (index) => {
+    state.whitelist.splice(index, 1);
+    renderWhitelistTags();
+    saveOptions();
+  });
+}
+
+function renderSelectorsTags() {
+  renderTags('selectors-tags-list', state.customSelectors, (index) => {
+    state.customSelectors.splice(index, 1);
+    renderSelectorsTags();
+    saveOptions();
+  });
+}
+
 // Load configurations from chrome.storage.sync
 function loadOptions() {
   chrome.storage.sync.get({
@@ -96,11 +144,13 @@ function loadOptions() {
     ui.blockVideos.checked = items[STORAGE_KEYS.blockVideos];
     ui.blockIframes.checked = items[STORAGE_KEYS.blockIframes];
     
-    // Whitelist is stored as array, display as newline-separated string
-    ui.whitelist.value = (items[STORAGE_KEYS.whitelist] || []).join('\n');
-    
-    // Custom Selectors is stored as array, display as newline-separated string
-    ui.customSelectors.value = (items[STORAGE_KEYS.customSelectors] || []).join('\n');
+    // Update local state lists
+    state.whitelist = items[STORAGE_KEYS.whitelist] || [];
+    state.customSelectors = items[STORAGE_KEYS.customSelectors] || [];
+
+    // Render chips
+    renderWhitelistTags();
+    renderSelectorsTags();
 
     // Run visibility handler
     handleModeVisibility(items[STORAGE_KEYS.obfuscationMode]);
@@ -109,16 +159,6 @@ function loadOptions() {
 
 // Save options to chrome.storage.sync
 function saveOptions() {
-  const whitelistArray = ui.whitelist.value
-    .split('\n')
-    .map(line => line.trim().toLowerCase())
-    .filter(line => line.length > 0);
-
-  const customSelectorsArray = ui.customSelectors.value
-    .split('\n')
-    .map(line => line.trim())
-    .filter(line => line.length > 0);
-
   chrome.storage.sync.set({
     [STORAGE_KEYS.reloadOnToggle]: ui.reloadOnToggle.checked,
     [STORAGE_KEYS.obfuscationMode]: ui.obfuscationMode.value,
@@ -128,11 +168,114 @@ function saveOptions() {
     [STORAGE_KEYS.blockImages]: ui.blockImages.checked,
     [STORAGE_KEYS.blockVideos]: ui.blockVideos.checked,
     [STORAGE_KEYS.blockIframes]: ui.blockIframes.checked,
-    [STORAGE_KEYS.whitelist]: whitelistArray,
-    [STORAGE_KEYS.customSelectors]: customSelectorsArray
+    [STORAGE_KEYS.whitelist]: state.whitelist,
+    [STORAGE_KEYS.customSelectors]: state.customSelectors
   }, () => {
     showToast();
   });
+}
+
+// Validate CSS Selector using browser native parser, rejecting plain tag names (e.g. 'a', 'div')
+function isValidCSSSelector(selector) {
+  if (!selector || selector.trim() === '') return false;
+  
+  // 1. Syntactic validation using browser parser
+  try {
+    document.createDocumentFragment().querySelector(selector);
+  } catch (e) {
+    return false;
+  }
+
+  // 2. Reject plain HTML tags (like 'a', 'div', 'p') because they are too generic
+  // Custom CSS selectors are meant to target specific elements using classes, IDs, attributes, etc.
+  const plainTagRegex = /^[a-zA-Z0-9]+$/;
+  if (plainTagRegex.test(selector.trim())) {
+    return false;
+  }
+
+  return true;
+}
+
+// Validate Domain (supports standard domains and *.domain wildcards)
+function isValidDomain(domain) {
+  if (!domain) return false;
+  // Regex matches standard domains and subdomains, plus optional leading *. wildcard
+  const domainRegex = /^(?:\*\.)?[a-zA-Z0-9][-a-zA-Z0-9]{0,62}(?:\.[a-zA-Z0-9][-a-zA-Z0-9]{0,62})+$/;
+  return domainRegex.test(domain);
+}
+
+// Process tag additions on keystroke or blur with validation
+function processTagInput(inputEl, tagArray, renderFn) {
+  const val = inputEl.value.trim();
+  const isWhitelist = inputEl.id === 'whitelist-input';
+  const errorEl = isWhitelist ? ui.whitelistError : ui.selectorsError;
+
+  if (!val) {
+    // Clear error style and message if input is empty
+    inputEl.classList.remove('invalid');
+    if (errorEl) {
+      errorEl.textContent = '';
+      errorEl.style.display = 'none';
+    }
+    return;
+  }
+
+  // Whitelist: split by comma or spaces; Selectors: split ONLY by comma (supporting spaces)
+  const splitRegex = isWhitelist ? /[,\s]+/ : /,+/;
+  const parts = val.split(splitRegex).map(p => p.trim()).filter(p => p.length > 0);
+  
+  const invalidParts = [];
+  const validParts = [];
+
+  parts.forEach(part => {
+    if (isWhitelist) {
+      const formatted = part.toLowerCase();
+      if (isValidDomain(formatted)) {
+        if (!tagArray.includes(formatted)) {
+          validParts.push(formatted);
+        }
+      } else {
+        invalidParts.push(part);
+      }
+    } else {
+      if (isValidCSSSelector(part)) {
+        if (!tagArray.includes(part)) {
+          validParts.push(part);
+        }
+      } else {
+        invalidParts.push(part);
+      }
+    }
+  });
+
+  if (invalidParts.length > 0) {
+    // Mark input container as invalid
+    inputEl.classList.add('invalid');
+    
+    // Set custom error message
+    if (errorEl) {
+      errorEl.textContent = isWhitelist 
+        ? "Invalid domain format (e.g. *.example.com or example.com)."
+        : "Invalid selector (use classes like .banner, IDs like #media, or complex rules. Plain HTML tags like 'a' or 'div' are not allowed).";
+      errorEl.style.display = 'block';
+    }
+    
+    // Keep only the invalid parts in the input field for correction
+    inputEl.value = invalidParts.join(', ');
+  } else {
+    inputEl.classList.remove('invalid');
+    inputEl.value = '';
+    if (errorEl) {
+      errorEl.textContent = '';
+      errorEl.style.display = 'none';
+    }
+  }
+
+  if (validParts.length > 0) {
+    tagArray.push(...validParts);
+    renderFn();
+    saveOptions();
+  }
 }
 
 // Event Listeners initialization
@@ -176,11 +319,27 @@ function initEventListeners() {
     saveOptions();
   });
 
-  // Save whitelist on blur of textarea (user finished editing)
-  ui.whitelist.addEventListener('blur', saveOptions);
+  // Whitelist chips input handlers
+  ui.whitelistInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      processTagInput(ui.whitelistInput, state.whitelist, renderWhitelistTags);
+    }
+  });
+  ui.whitelistInput.addEventListener('blur', () => {
+    processTagInput(ui.whitelistInput, state.whitelist, renderWhitelistTags);
+  });
 
-  // Save custom selectors on blur of textarea
-  ui.customSelectors.addEventListener('blur', saveOptions);
+  // Custom Selectors chips input handlers
+  ui.selectorsInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      processTagInput(ui.selectorsInput, state.customSelectors, renderSelectorsTags);
+    }
+  });
+  ui.selectorsInput.addEventListener('blur', () => {
+    processTagInput(ui.selectorsInput, state.customSelectors, renderSelectorsTags);
+  });
 }
 
 // Load option pages

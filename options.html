@@ -357,6 +357,72 @@
       border-color: var(--accent-color);
     }
 
+    /* Tags/Chips Input Component */
+    .text-input.invalid {
+      border-color: #ef4444 !important;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+    }
+
+    .tags-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .tag-chip {
+      background-color: var(--accent-light);
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .remove-tag-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px;
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    .remove-tag-btn:hover {
+      background-color: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+    }
+
+    .tag-input-field {
+      background: none;
+      border: none;
+      color: var(--text-color);
+      outline: none;
+      flex-grow: 1;
+      min-width: 120px;
+      font-family: inherit;
+      font-size: 14px;
+      padding: 4px 0;
+    }
+
     /* Image preview card */
     .placeholder-preview-card {
       margin-top: 15px;
@@ -633,11 +699,13 @@
         </h2>
 
         <div class="form-group">
-          <label for="whitelist">
+          <label for="whitelist-input">
             Whitelisted Domains
-            <span class="label-desc">Enter domains (one per line) where media should never be blocked. (e.g. youtube.com)</span>
+            <span class="label-desc">Add domains (e.g. youtube.com, *.google.com) where media should never be blocked. Type and press Enter or comma.</span>
           </label>
-          <textarea id="whitelist" class="text-input" placeholder="example.com&#10;anotherdomain.org" spellcheck="false"></textarea>
+          <input type="text" class="text-input" id="whitelist-input" placeholder="Add domain (e.g. *.example.com)...">
+          <span class="error-message" id="whitelist-error" style="color: #ef4444; font-size: 12px; margin-top: 6px; display: none; font-weight: 500;"></span>
+          <div class="tags-list" id="whitelist-tags-list"></div>
         </div>
       </section>
 
@@ -648,18 +716,20 @@
         </h2>
 
         <div class="form-group">
-          <label for="customSelectors">
+          <label for="selectors-input">
             Custom Selectors to Block
-            <span class="label-desc">Enter CSS selectors (one per line, e.g. .sensitive-class, #ad-media) to manually block additional elements on any page.</span>
+            <span class="label-desc">Add CSS selectors (e.g. .sensitive-class, #ad-media) to manually block additional elements on any page. Type and press Enter or comma.</span>
           </label>
-          <textarea id="customSelectors" class="text-input" placeholder=".ad-banner&#10;#sensitive-content&#10;div.restricted-media" spellcheck="false"></textarea>
+          <input type="text" class="text-input" id="selectors-input" placeholder="Add CSS selector (e.g. #ad-media, .restricted-banner)...">
+          <span class="error-message" id="selectors-error" style="color: #ef4444; font-size: 12px; margin-top: 6px; display: none; font-weight: 500;"></span>
+          <div class="tags-list" id="selectors-tags-list"></div>
         </div>
       </section>
     </main>
 
     <footer>
       <p><strong>Hide & Seek</strong> is 100% private. No data leaves your machine.</p>
-      <p>Created by <a href="https://github.com/albertolicea00" target="_blank" rel="noopener noreferrer">Alberto Licea</a></p>
+      <p>Made with 💛 by <a href="https://github.com/albertolicea00" target="_blank" rel="noopener noreferrer">Alberto Licea</a></p>
     </footer>
   </div>
 
